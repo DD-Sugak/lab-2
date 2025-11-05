@@ -68,6 +68,74 @@ class TestMathExpressionRegex(unittest.TestCase):
                 else:
                     self.assertEqual(len(matches), 0)
 
+#Тесты для выражений со скобками
+class TestMathExpressionWithParentheses(unittest.TestCase):
+
+    def setUp(self):
+        self.MATH_EXPRESSION_PATTERN = MathExpressionFinder.MATH_EXPRESSION_PATTERN
+
+    def test_finds_expressions_inside_parentheses(self):
+        # Тест, что находит математические выражения внутри скобок
+        test_cases = [
+            ("(2 + 2)", True),  # Должно найти "2 + 2"
+            ("(3 * 4)", True),  # Должно найти "3 * 4"
+            ("2 * (3 + 4)", True),  # Должно найти "3 + 4"
+            ("(5 + 3) * 2", True),  # Должно найти "5 + 3"
+            ("((2 + 3))", True),  # Должно найти "2 + 3"
+        ]
+
+        for expression, should_find in test_cases:
+            with self.subTest(expression=expression):
+                matches = self.MATH_EXPRESSION_PATTERN.findall(expression)
+                if should_find:
+                    self.assertTrue(len(matches) > 0,
+                                    f"Не найдено совпадений для: {expression}")
+                else:
+                    self.assertEqual(len(matches), 0,
+                                     f"Найдены лишние совпадения для: {expression}")
+
+    def test_finds_parentheses_expressions_in_text(self):
+        # Тест поиска выражений со скобками в тексте
+        text_samples = [
+            ("Выражение: (2 + 2) = 4", True),  # Должно найти
+            ("Результаты: (3 * 4) и (10 - 5)", True),  # Должно найти
+            ("Текст без выражений", False),  # Не должно найти
+        ]
+
+        for text, should_find in text_samples:
+            with self.subTest(text=text):
+                matches = self.MATH_EXPRESSION_PATTERN.findall(text)
+                if should_find:
+                    self.assertTrue(len(matches) > 0)
+                else:
+                    self.assertEqual(len(matches), 0)
+
+    def test_does_not_find_empty_parentheses(self):
+        # Тест, что не находит пустые или некорректные скобки
+        test_cases = [
+            "()",  # Пустые скобки
+            "(+)",  # Только оператор
+            "(abc)",  # Буквы в скобках
+        ]
+
+        for expression in test_cases:
+            with self.subTest(expression=expression):
+                matches = self.MATH_EXPRESSION_PATTERN.findall(expression)
+                self.assertEqual(len(matches), 0,
+                                 f"Найдены совпадения для некорректного выражения: {expression}")
+
+    def test_debug_what_regex_finds(self):
+        # Простой тест для отладки - что находит регулярное выражение
+        debug_cases = [
+            "(2 + 2)",
+            "2 * (3 + 4)",
+            "((2 + 3))",
+            "(2 +",
+        ]
+
+        for expression in debug_cases:
+            with self.subTest(expression=expression):
+                matches = self.MATH_EXPRESSION_PATTERN.findall(expression)
 
 #Тест функций библиотеки re
 class TestFormatCompilation(unittest.TestCase):
@@ -98,6 +166,7 @@ def run_tests():
     suite = unittest.TestSuite()
 
     suite.addTests(loader.loadTestsFromTestCase(TestMathExpressionRegex))
+    suite.addTests(loader.loadTestsFromTestCase(TestMathExpressionWithParentheses))
     suite.addTests(loader.loadTestsFromTestCase(TestFormatCompilation))
 
     runner = unittest.TextTestRunner(verbosity=2)
